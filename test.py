@@ -2,7 +2,7 @@ from model.NAS_Bench_Graph_model import Net,get_NAS_Bench_graph_HP,get_num_featu
 from pruners.predictive import find_measures
 
 if __name__ == '__main__':
-  operations = ["gat","gcn",  "gin", "cheb"]
+  operations = ["gat", "gcn", "gin", "cheb"]
   link = [0,1,2,3]
   dname = 'CS'
   in_dim = get_num_features(dname)
