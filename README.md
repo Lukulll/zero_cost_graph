@@ -1,6 +1,6 @@
 # zero_cost_graph
 zero_cost_graph
-
+## Setup
 '''
 $ !pip uninstall torch-scatter torch-sparse torch-geometric torch-cluster  --y
 $ !pip install torch-scatter -f https://data.pyg.org/whl/torch-{torch.__version__}.html
