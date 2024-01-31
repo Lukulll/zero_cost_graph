@@ -19,19 +19,24 @@ import numpy as np
 from . import measure
 
 
-def get_batch_jacobian(net, x, target, device, split_data):
-    x.requires_grad_(True)
+def get_batch_jacobian(net, inputs, device, split_data):
+    inputs['x'].requires_grad_(True)
 
-    N = x.shape[0]
+    N = inputs['x'].shape[0]
+    
     for sp in range(split_data):
         st=sp*N//split_data
         en=(sp+1)*N//split_data
-        y = net(x[st:en])
+        train_mask = inputs['train_mask']
+        inputs['train_mask'][:st] = False
+        inputs['train_mask'][en:] = False
+        y = net.forward(inputs)[inputs['train_mask']]
         y.backward(torch.ones_like(y))
+        inputs['train_mask'] = train_mask
 
-    jacob = x.grad.detach()
-    x.requires_grad_(False)
-    return jacob, target.detach()
+    jacob = inputs['x'].grad.detach()[inputs['train_mask']]
+    inputs['x'].requires_grad_(False)
+    return jacob, inputs['y'].detach()
 
 def eval_score(jacob, labels=None):
     corrs = np.corrcoef(jacob)
@@ -40,12 +45,12 @@ def eval_score(jacob, labels=None):
     return -np.sum(np.log(v + k) + 1./(v + k))
 
 @measure('jacob_cov', bn=True)
-def compute_jacob_cov(net, inputs, targets, split_data=1, loss_fn=None):
+def compute_jacob_cov(net, inputs, split_data=1, loss_fn=None):
     device = inputs['x'].device
     # Compute gradients (but don't apply them)
     net.zero_grad()
 
-    jacobs, labels = get_batch_jacobian(net, inputs, targets, device, split_data=split_data)
+    jacobs, labels = get_batch_jacobian(net, inputs, device, split_data=split_data)
     jacobs = jacobs.reshape(jacobs.size(0), -1).cpu().numpy()
 
     try:
